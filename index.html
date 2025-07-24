@@ -1,241 +1,184 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
 
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
 
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
 
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#ffffff">
-  <title>Daily Tracker</title>
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module">
-    import React, { useState, useEffect } from 'https://esm.sh/react@18.2.0';
-    import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+  
+  
+  
+  Daily Tracker
+  
+  
+  
+  
 
-    // Error Boundary Component
-    class ErrorBoundary extends React.Component {
-      state = { error: null };
-      static getDerivedStateFromError(error) {
-        return { error };
-      }
-      render() {
-        if (this.state.error) {
-          return (
-            <div className="p-4 text-red-500">
-              <h1>Error: Something went wrong.</h1>
-              <p>{this.state.error.message}</p>
-            </div>
-          );
-        }
-        return this.props.children;
-      }
+
+  
+  
+    const { useState, useEffect } = React;
+    const { createRoot } = ReactDOM;
+
+<pre><code>const App = () =&gt; {
+  const [categories, setCategories] = useState([
+    { id: 1, name: &#39;Mood&#39;, score: null },
+    { id: 2, name: &#39;Energy&#39;, score: null },
+    { id: 3, name: &#39;Productivity&#39;, score: null },
+    { id: 4, name: &#39;Sleep&#39;, score: null },
+    { id: 5, name: &#39;Exercise&#39;, score: null },
+  ]);
+  const [history, setHistory] = useState([]);
+  const [view, setView] = useState(&#39;tracker&#39;);
+  const [timeScale, setTimeScale] = useState(&#39;week&#39;);
+
+  useEffect(() =&gt; {
+    const savedHistory = localStorage.getItem(&#39;trackerHistory&#39;);
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
     }
+  }, []);
 
-    const App = () => {
-      const [categories, setCategories] = useState([
-        { id: 1, name: 'Mood', score: null },
-        { id: 2, name: 'Energy', score: null },
-        { id: 3, name: 'Productivity', score: null },
-        { id: 4, name: 'Sleep', score: null },
-        { id: 5, name: 'Exercise', score: null },
-      ]);
-      const [history, setHistory] = useState([]);
-      const [view, setView] = useState('tracker');
-      const [timeScale, setTimeScale] = useState('week');
+  const handleScore = (categoryId, score) =&gt; {
+    setCategories(categories.map(cat =&gt;
+      cat.id === categoryId ? { ...cat, score } : cat
+    ));
+  };
 
-      useEffect(() => {
-        try {
-          const savedHistory = localStorage.getItem('trackerHistory');
-          if (savedHistory) {
-            setHistory(JSON.parse(savedHistory));
-          }
-        } catch (e) {
-          console.error('Error loading history:', e);
-        }
-      }, []);
+  const submitScores = () =&gt; {
+    const date = new Date().toISOString().split(&#39;T&#39;)[0];
+    const newEntry = { date, scores: { ...categories.reduce((acc, cat) =&gt; ({ ...acc, [cat.name]: cat.score }), {}) } };
+    const updatedHistory = [...history, newEntry];
+    setHistory(updatedHistory);
+    localStorage.setItem(&#39;trackerHistory&#39;, JSON.stringify(updatedHistory));
+    setCategories(categories.map(cat =&gt; ({ ...cat, score: null })));
+    alert(&#39;Scores submitted!&#39;);
+  };
 
-      const handleScore = (categoryId, score) => {
-        setCategories(categories.map(cat =>
-          cat.id === categoryId ? { ...cat, score } : cat
-        ));
-      };
+  const allScored = categories.every(cat =&gt; cat.score !== null);
 
-      const submitScores = () => {
-        const date = new Date().toISOString().split('T')[0];
-        const newEntry = { date, scores: { ...categories.reduce((acc, cat) => ({ ...acc, [cat.name]: cat.score }), {}) } };
-        const updatedHistory = [...history, newEntry];
-        setHistory(updatedHistory);
-        localStorage.setItem('trackerHistory', JSON.stringify(updatedHistory));
-        setCategories(categories.map(cat => ({ ...cat, score: null })));
-        alert('Scores submitted!');
-      };
+  const getFilteredHistory = () =&gt; {
+    const now = new Date();
+    const filterDate = new Date();
+    if (timeScale === &#39;week&#39;) {
+      filterDate.setDate(now.getDate() - 7);
+    } else if (timeScale === &#39;month&#39;) {
+      filterDate.setMonth(now.getMonth() - 1);
+    } else if (timeScale === &#39;year&#39;) {
+      filterDate.setFullYear(now.getFullYear() - 1);
+    }
+    return history.filter(entry =&gt; new Date(entry.date) &gt;= filterDate);
+  };
 
-      const allScored = categories.every(cat => cat.score !== null);
+  return (
+    &lt;div className=&quot;max-w-md mx-auto h-screen flex flex-col p-4 bg-gray-100&quot;&gt;
+      &lt;div className=&quot;flex justify-between mb-4&quot;&gt;
+        &lt;button
+          className={`px-4 py-2 ${view === &#39;tracker&#39; ? &#39;bg-blue-500 text-white&#39; : &#39;bg-gray-200&#39;} rounded`}
+          onClick={() =&gt; setView(&#39;tracker&#39;)}
+        &gt;
+          Tracker
+        &lt;/button&gt;
+        &lt;button
+          className={`px-4 py-2 ${view === &#39;history&#39; ? &#39;bg-blue-500 text-white&#39; : &#39;bg-gray-200&#39;} rounded`}
+          onClick={() =&gt; setView(&#39;history&#39;)}
+        &gt;
+          History
+        &lt;/button&gt;
+      &lt;/div&gt;
 
-      const getFilteredHistory = () => {
-        const now = new Date();
-        const filterDate = new Date();
-        if (timeScale === 'week') {
-          filterDate.setDate(now.getDate() - 7);
-        } else if (timeScale === 'month') {
-          filterDate.setMonth(now.getMonth() - 1);
-        } else if (timeScale === 'year') {
-          filterDate.setFullYear(now.getFullYear() - 1);
-        }
-        return history.filter(entry => new Date(entry.date) >= filterDate);
-      };
-
-      return (
-        <div className="max-w-md mx-auto h-screen flex flex-col p-4 bg-gray-100">
-          <div className="flex justify-between mb-4">
-            <button
-              className={`px-4 py-2 ${view === 'tracker' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded`}
-              onClick={() => setView('tracker')}
-            >
-              Tracker
-            </button>
-            <button
-              className={`px-4 py-2 ${view === 'history' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded`}
-              onClick={() => setView('history')}
-            >
-              History
-            </button>
-          </div>
-
-          {view === 'tracker' ? (
-            <>
-              <div className="flex-1 overflow-y-auto mb-16">
-                {categories.map(category => (
-                  <div key={category.id} className="flex justify-between items-center p-2 bg-white rounded mb-2 shadow">
-                    <span>{category.name}</span>
-                    <span className="text-lg">{category.score || '-'}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white shadow-lg flex justify-between">
-                {[1, 2, 3, 4, 5].map(score => (
-                  <button
-                    key={score}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    onClick={() => {
-                      const selectedCategory = categories.find(cat => cat.score === null);
-                      if (selectedCategory) {
-                        handleScore(selectedCategory.id, score);
-                      }
-                    }}
-                  >
-                    {score}
-                  </button>
-                ))}
-                {allScored && (
-                  <button
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    onClick={submitScores}
-                  >
-                    Submit
-                  </button>
-                )}
-              </div>
-            </>
+      {view === &#39;tracker&#39; ? (
+        &lt;&gt;
+          &lt;div className=&quot;flex-1 overflow-y-auto mb-16&quot;&gt;
+            {categories.map(category =&gt; (
+              &lt;div key={category.id} className=&quot;flex justify-between items-center p-2 bg-white rounded mb-2 shadow&quot;&gt;
+                &lt;span&gt;{category.name}&lt;/span&gt;
+                &lt;span className=&quot;text-lg&quot;&gt;{category.score || &#39;-&#39;}&lt;/span&gt;
+              &lt;/div&gt;
+            ))}
+          &lt;/div&gt;
+          &lt;div className=&quot;fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white shadow-lg flex justify-between&quot;&gt;
+            {[1, 2, 3, 4, 5].map(score =&gt; (
+              &lt;button
+                key={score}
+                className=&quot;px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600&quot;
+                onClick={() =&gt; {
+                  const selectedCategory = categories.find(cat =&gt; cat.score === null);
+                  if (selectedCategory) {
+                    handleScore(selectedCategory.id, score);
+                  }
+                }}
+              &gt;
+                {score}
+              &lt;/button&gt;
+            ))}
+            {allScored &amp;&amp; (
+              &lt;button
+                className=&quot;px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600&quot;
+                onClick={submitScores}
+              &gt;
+                Submit
+              &lt;/button&gt;
+            )}
+          &lt;/div&gt;
+        &lt;/&gt;
+      ) : (
+        &lt;div className=&quot;flex-1 overflow-y-auto&quot;&gt;
+          &lt;div className=&quot;flex justify-between mb-4&quot;&gt;
+            &lt;button
+              className={`px-4 py-2 ${timeScale === &#39;week&#39; ? &#39;bg-blue-500 text-white&#39; : &#39;bg-gray-200&#39;} rounded`}
+              onClick={() =&gt; setTimeScale(&#39;week&#39;)}
+            &gt;
+              Week
+            &lt;/button&gt;
+            &lt;button
+              className={`px-4 py-2 ${timeScale === &#39;month&#39; ? &#39;bg-blue-500 text-white&#39; : &#39;bg-gray-200&#39;} rounded`}
+              onClick={() =&gt; setTimeScale(&#39;month&#39;)}
+            &gt;
+              Month
+            &lt;/button&gt;
+            &lt;button
+              className={`px-4 py-2 ${timeScale === &#39;year&#39; ? &#39;bg-blue-500 text-white&#39; : &#39;bg-gray-200&#39;} rounded`}
+              onClick={() =&gt; setTimeScale(&#39;year&#39;)}
+            &gt;
+              Year
+            &lt;/button&gt;
+          &lt;/div&gt;
+          {getFilteredHistory().length === 0 ? (
+            &lt;p&gt;No data available for this time scale.&lt;/p&gt;
           ) : (
-            <div className="flex-1 overflow-y-auto">
-              <div className="flex justify-between mb-4">
-                <button
-                  className={`px-4 py-2 ${timeScale === 'week' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded`}
-                  onClick={() => setTimeScale('week')}
-                >
-                  Week
-                </button>
-                <button
-                  className={`px-4 py-2 ${timeScale === 'month' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded`}
-                  onClick={() => setTimeScale('month')}
-                >
-                  Month
-                </button>
-                <button
-                  className={`px-4 py-2 ${timeScale === 'year' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded`}
-                  onClick={() => setTimeScale('year')}
-                >
-                  Year
-                </button>
-              </div>
-              {getFilteredHistory().length === 0 ? (
-                <p>No data available for this time scale.</p>
-              ) : (
-                getFilteredHistory().map(entry => (
-                  <div key={entry.date} className="p-2 bg-white rounded mb-2 shadow">
-                    <h3 className="font-bold">{entry.date}</h3>
-                    {Object.entries(entry.scores).map(([name, score]) => (
-                      <div key={name} className="flex justify-between">
-                        <span>{name}</span>
-                        <span>{score}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))
-              )}
-            </div>
+            getFilteredHistory().map(entry =&gt; (
+              &lt;div key={entry.date} className=&quot;p-2 bg-white rounded mb-2 shadow&quot;&gt;
+                &lt;h3 className=&quot;font-bold&quot;&gt;{entry.date}&lt;/h3&gt;
+                {Object.entries(entry.scores).map(([name, score]) =&gt; (
+                  &lt;div key={name} className=&quot;flex justify-between&quot;&gt;
+                    &lt;span&gt;{name}&lt;/span&gt;
+                    &lt;span&gt;{score}&lt;/span&gt;
+                  &lt;/div&gt;
+                ))}
+              &lt;/div&gt;
+            ))
           )}
-        </div>
-      );
-    };
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+};
 
-    const root = createRoot(document.getElementById('root'));
-    root.render(
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    );
+try {
+  const root = createRoot(document.getElementById(&#39;root&#39;));
+  root.render(App());
+} catch (error) {
+  console.error(&#39;Failed to render React app:&#39;, error);
+}
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(error => {
-          console.error('Service Worker registration failed:', error);
-        });
+if (&#39;serviceWorker&#39; in navigator) {
+  window.addEventListener(&#39;load&#39;, () =&gt; {
+    navigator.serviceWorker.register(&#39;/service-worker.js&#39;)
+      .then(registration =&gt; {
+        console.log(&#39;Service Worker registered:&#39;, registration);
+      })
+      .catch(error =&gt; {
+        console.error(&#39;Service Worker registration failed:&#39;, error);
       });
-    }
-  </script>
-</body>
-</html>
+  });
+}
+</code></pre>
+<p>  
+(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96464acfedae1e2d',t:'MTc1MzM5MDI1MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
