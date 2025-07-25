@@ -6,15 +6,21 @@
   <meta name="theme-color" content="#ffffff">
   <title>Daily Tracker</title>
   <link rel="manifest" href="/manifest.json">
-  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
   <div id="root"></div>
   <script>
-    const { useState, useEffect } = React;
-    const { createRoot } = ReactDOM;
+    console.log('Starting script execution...');
+    const { useState, useEffect } = React || {};
+    const { createRoot } = ReactDOM || {};
+
+    if (!React || !ReactDOM) {
+      console.error('React or ReactDOM failed to load');
+      throw new Error('Required libraries not available');
+    }
 
     const App = () => {
       const [categories, setCategories] = useState([
@@ -31,7 +37,11 @@
       useEffect(() => {
         const savedHistory = localStorage.getItem('trackerHistory');
         if (savedHistory) {
-          setHistory(JSON.parse(savedHistory));
+          try {
+            setHistory(JSON.parse(savedHistory));
+          } catch (error) {
+            console.error('Failed to parse tracker history:', error);
+          }
         }
       }, []);
 
@@ -161,15 +171,19 @@
       );
     };
 
+    console.log('Rendering React app...');
     try {
       const root = createRoot(document.getElementById('root'));
       root.render(App());
+      console.log('React app rendered successfully');
     } catch (error) {
       console.error('Failed to render React app:', error);
     }
 
+    console.log('Attempting service worker registration...');
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
+        console.log('Window loaded, registering service worker...');
         navigator.serviceWorker.register('/service-worker.js')
           .then(registration => {
             console.log('Service Worker registered:', registration);
@@ -178,7 +192,9 @@
             console.error('Service Worker registration failed:', error);
           });
       });
+    } else {
+      console.warn('Service Worker not supported in this browser');
     }
   </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96464acfedae1e2d',t:'MTc1MzM5MDI1MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
