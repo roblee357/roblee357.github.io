@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern CSS Transitions Demo</title>
+    <style>
+        /* Basic cross-page fade transition */
+        @view-transition {
+            navigation: auto;
+        }
+
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation: fade 0.3s ease both;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* Shared element transition for images */
+        .product-image {
+            view-transition-name: product-image;
+        }
+
+        /* Basic styling for the demo */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        nav {
+            background: #333;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .product-card img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .product-detail img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <script type="speculationrules">
+    {
+        "prerender": [
+            {
+                "where": {
+                    "selector_matches": "a"
+                }
+            }
+        ]
+    }
+    </script>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="product.html">Product</a>
+    </nav>
+    <h1>Product Listing</h1>
+    <div class="product-grid">
+        <a href="product.html" class="product-card">
+            <img src="https://via.placeholder.com/200x200" alt="Product Image" class="product-image">
+            <h2>Sample Product</h2>
+            <p>Click to view details</p>
+        </a>
+    </div>
+</body>
+</html>
