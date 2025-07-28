@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - Modern CSS Transitions Demo</title>
+    <style>
+        /* Basic cross-page fade transition */
+        @view-transition {
+            navigation: auto;
+        }
+
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation: fade 0.3s ease both;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* Shared element transition for images */
+        .product-image {
+            view-transition-name: product-image;
+        }
+
+        /* Basic styling for the demo */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        nav {
+            background: #333;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .product-detail img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <script type="speculationrules">
+    {
+        "prerender": [
+            {
+                "where": {
+                    "selector_matches": "a"
+                }
+            }
+        ]
+    }
+    </script>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="product.html">Product</a>
+    </nav>
+    <div class="product-detail">
+        <h1>Sample Product</h1>
+        <img src="https://via.placeholder.com/400x400" alt="Product Image" class="product-image">
+        <p>This is a sample product detail page demonstrating modern CSS transitions using the View Transitions API.</p>
+        <p>Click the Home link to return to the listing page and observe the smooth transition with shared element animation.</p>
+    </div>
+</body>
+</html>
