@@ -14,14 +14,21 @@
   <div id="root"></div>
   <script>
     console.log('Starting script execution...');
-    const { useState, useEffect } = React || {};
-    const { createRoot } = ReactDOM || {};
 
-    if (!React || !ReactDOM) {
-      console.error('React or ReactDOM failed to load');
-      throw new Error('Required libraries not available');
+    if (!window.React) {
+      console.error('React failed to load from CDN');
+      throw new Error('React not available');
     }
+    if (!window.ReactDOM) {
+      console.error('ReactDOM failed to load from CDN');
+      throw new Error('ReactDOM not available');
+    }
+    console.log('React and ReactDOM loaded successfully');
 
+    const { useState, useEffect } = React;
+    const { createRoot } = ReactDOM;
+
+    console.log('Defining App component...');
     const App = () => {
       const [categories, setCategories] = useState([
         { id: 1, name: 'Mood', score: null },
@@ -35,6 +42,7 @@
       const [timeScale, setTimeScale] = useState('week');
 
       useEffect(() => {
+        console.log('Running useEffect for localStorage...');
         const savedHistory = localStorage.getItem('trackerHistory');
         if (savedHistory) {
           try {
